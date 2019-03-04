@@ -23,6 +23,7 @@ class ToDoTableView: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        // loadItems() method is set in the selectedCategory property
         
     }
     

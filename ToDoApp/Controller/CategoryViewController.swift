@@ -31,8 +31,7 @@ class CategoryViewController: UITableViewController {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         
-        let category = categoryArray[indexPath.row]
-        cell.textLabel?.text = category.name
+        cell.textLabel?.text = categoryArray[indexPath.row].name
         
         return cell
     }
@@ -40,6 +39,7 @@ class CategoryViewController: UITableViewController {
     //MARK - TableView Delegate Method
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        
         let dvc = segue.destination as! ToDoTableView
         
         if let indexPath = tableView.indexPathForSelectedRow {
@@ -48,7 +48,9 @@ class CategoryViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
         performSegue(withIdentifier: "goToItems", sender: self)
+        
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
