@@ -8,9 +8,10 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 //import CoreData
 
-class ToDoTableView: UITableViewController {
+class ToDoTableView: SwipeTableViewController {
     
     let realm = try! Realm()
     
@@ -22,15 +23,47 @@ class ToDoTableView: UITableViewController {
         }
     }
     
+    @IBOutlet weak var searchBar: UISearchBar!
+    
 //    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // loadItems() method is set in the selectedCategory property
         
+        tableView.separatorStyle = .none
     }
     
-    //MARK - TableView Datasource Methods
+    override func viewWillAppear(_ animated: Bool) {
+        
+        title = selectedCategory?.name
+        
+        guard let colourHex = selectedCategory?.colorCategory else {fatalError()}
+            
+        updateNavBar(withHexCode: colourHex)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        
+        updateNavBar(withHexCode: "1D9BF6")
+    }
+    
+    //MARK: - Navigation Bar Setup Methods
+    
+    func updateNavBar(withHexCode colourHexCode: String) {
+        
+        guard let navBar = navigationController?.navigationBar else {fatalError("Navigation Bar does not consist!")}
+        
+        guard let navBarColour = UIColor(hexString: colourHexCode) else {fatalError()}
+        
+        navBar.barTintColor = navBarColour
+        navBar.tintColor = ContrastColorOf(navBarColour, returnFlat: true)
+        navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : ContrastColorOf(navBarColour, returnFlat: true)]
+        
+        searchBar.barTintColor = navBarColour
+    }
+    
+    //MARK: - TableView Datasource Methods
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return itemArray?.count ?? 1
@@ -38,10 +71,15 @@ class ToDoTableView: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = itemArray?[indexPath.row] {
             cell.textLabel?.text = item.title
+            
+            if let colour = UIColor(hexString: selectedCategory!.colorCategory)?.darken(byPercentage: CGFloat(indexPath.row)/CGFloat(itemArray!.count)) {
+                cell.backgroundColor = colour
+                cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+            }
             
             //Ternary operator for checkmark
             cell.accessoryType = item.done ? .checkmark : .none
@@ -52,7 +90,7 @@ class ToDoTableView: UITableViewController {
         return cell
     }
     
-    //MARK - TableView Delegate Method
+    //MARK: - TableView Delegate Method
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
@@ -71,7 +109,7 @@ class ToDoTableView: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
-    //MARK - Add New Items
+    //MARK: - Add New Items
 
     @IBAction func AddButtonPressed(_ sender: UIBarButtonItem) {
         
@@ -114,7 +152,21 @@ class ToDoTableView: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
-    //MARK - Data Manipulation Methods
+    //MARK: - Delete Data From Swipe
+    
+    override func updateModel(at indexPath: IndexPath) {
+        do {
+            try realm.write {
+                if let itemForDelete = itemArray?[indexPath.row] {
+                    realm.delete(itemForDelete)
+                }
+            }
+        } catch {
+            print("Error deleting item \(error)")
+        }
+    }
+    
+    //MARK: - Data Manipulation Methods
     
 //    func save(item: Item) {
 //
@@ -159,7 +211,7 @@ class ToDoTableView: UITableViewController {
     
 }
 
-//MARK - Search Bar Methods
+//MARK: - Search Bar Methods
 
 extension ToDoTableView: UISearchBarDelegate {
 
